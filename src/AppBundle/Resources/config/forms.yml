@@ -1,0 +1,14 @@
+services:
+    app.form.type.emergency:
+        class: AppBundle\Form\Type\EmergencyType
+        arguments: 
+            - "@doctrine.orm.entity_manager"
+            - "@service_container"
+        tags:
+            - { name: form.type }
+    app.form.type.action:
+        class: AppBundle\Form\Type\ActionType
+        arguments:
+            - "@security.token_storage"
+        tags:
+            - { name: form.type }

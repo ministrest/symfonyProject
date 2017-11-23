@@ -1,0 +1,47 @@
+<div id="row-fields-{{ contiguousRoute.id }}" class="table__row" data-id="{{ contiguousRoute.id }}" data-type="contiguous">
+    <input type="hidden" id="contiguousRouteCoordinates" 
+        name="string_coordinates" 
+        value="{% if contiguousRoute.route is not null and contiguousRoute.route != false %}{{ contiguousRoute.route.stringCoordinates }}{% endif %}"
+        data-id="{{ contiguousRoute.id }}"
+        data-inverse="{% if contiguousRoute.route is not null and contiguousRoute.route != false %}{{ contiguousRoute.route.inverseCoordinates }}{% endif %}" />
+    {% for key, field in filterContiguousRoute.children %}
+        {% set fieldType = field.vars.block_prefixes %}
+        <div class="table__col row-{{ key }}">
+            <div class="text">
+                {% if attribute(contiguousRoute.route, key) is defined %}
+                    {% set value = attribute(contiguousRoute.route, key) %}
+                    {% if value is iterable %}
+                        {% set indexes = value | keys %}
+                        {% for index, item in value if index < 3 %}
+                            {{ item }}{% if index != 2 and index != indexes | last %}; {% endif %}
+                        {% endfor %}
+                        {% if indexes | length > 3 %} ... {% endif %}
+                    {% elseif 'filter_date' in fieldType %}
+                            {{ value | dateString('не указано') }}
+                    {% elseif value.timestamp is defined or 'datetime' in fieldType or 'filter_date_range' in fieldType %}
+                            {{ value | dateString('не указано') }}
+                    {% else %}
+                        {% if key == "routeType" %}
+                            <div class="row-{{ key }}">
+                                {{ contiguousRoute.route.routeTypeString }}
+                            </div>
+                        {% elseif key == "social" %}
+                            {{ contiguousRoute.route.social ? 'Да' : 'Нет' }}
+                        {% elseif key == "switchable" %}
+                            {{ contiguousRoute.route.switchable ? 'Да' : 'Нет' }}
+                        {% else %}
+                            {{ value }}
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+    <div class="table__col row-percentage">
+        <div class="text">
+            {% if attribute(contiguousRoute, 'percentage') is defined %}
+                {{ attribute(contiguousRoute, 'percentage') }}
+            {% endif %}
+        </div>
+    </div>
+</div>

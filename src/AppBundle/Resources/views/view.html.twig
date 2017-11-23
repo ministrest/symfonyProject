@@ -1,0 +1,82 @@
+{% extends 'AppBundle::layout.html.twig' %}
+
+{% block nav %}
+    {{ parent() }}
+    <a class="button-nav__link button-nav__link--active" href="{{ path("app_" ~ entityName|lower ~ "_list") }}">
+        <div class="icon icon--next"><svg viewbox="0 0 30 30"><use xlink:href="#next"></use></svg></div>
+        <div class="title">{% block navTitle %}{% endblock %}</div>
+    </a>
+    <a class="button-nav__link">
+        <div class="icon icon--next"><svg viewbox="0 0 30 30"><use xlink:href="#next"></use></svg></div>
+        <div class="title">{% block entityTitle %}{{ entity.title }}{% endblock %}</div>
+    </a>    
+{% endblock %}
+
+{% block submenu %}
+  <div class='layout__submenu'>
+    <div class="grid">
+      <div class="grid__colum">
+        {% block actions %}
+            {% if back is defined and back is not null %}
+                {% set url = back %}
+            {% else %}
+                {% set url = path('app_' ~ entityName|lower ~ '_list') %}
+            {% endif %}
+            
+            {% if (back is defined and back is not null) or (app.user and app.user.hasPermission("ROLE_" ~ entityName|prepareEntityName ~ "_LIST")) %}
+                <a href="{{ url }}" class="button-action">
+                    <div class="icon icon--back"><svg viewbox="0 0 30 30"><use xlink:href="#next"></use></svg></div>
+                    <div class="title">Вернуться назад</div>
+                </a>
+            {% endif %}
+            {% block edit %}
+                {% if app.user and app.user.hasPermission("ROLE_" ~ entityName|prepareEntityName ~ "_EDIT") %}
+                    {% block editExtraCondition %}
+                        <a href="{{ path('app_' ~ entityName|lower ~ '_edit', {id: entity.id}) }}" class="button-action">
+                            <div class="icon icon--plus"><svg viewbox="0 0 30 30"><use xlink:href="#edit"></use></svg></div>
+                            <div class="title">Редактировать</div>
+                        </a>
+                    {% endblock %}
+                {% endif %}
+            {% endblock %}
+            {% block delete %}
+                {% if app.user and app.user.hasPermission("ROLE_" ~ entityName|prepareEntityName ~ "_DELETE") %}
+                    <a href="{{ path('app_' ~ entityName|lower ~ '_delete', {id: entity.id}) }}" class="button-action button-delete">
+                        <div class="icon icon--plus"><svg viewbox="0 0 30 30"><use xlink:href="#delete"></use></svg></div>
+                        <div class="title">Удалить</div>
+                    </a>
+                {% endif %}
+            {% endblock %}
+        {% endblock %}
+      </div>
+      {% include 'AppBundle::Widgets/help.button.widget.html.twig' %}
+    </div>
+  </div>
+{% endblock %}
+
+{% block content %}
+  <div class="layout__content layout__content--view">
+    <div class="view-block" {% block view_block %}{% endblock %}>
+      <div class="view-block__title">
+        <div class="title">{% block view_title %}{% endblock %}</div>
+      </div>
+      <div class="view-block__content">
+        {% block view_data %}{% endblock %}
+        {% block other %}{% endblock %}
+      </div>
+    </div>
+    <div class="view-map">
+      {% block view_map %}{% endblock %}
+    </div>
+  </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {% javascripts 
+        output='resources/js/*.js'
+        '@AppBundle/Resources/public/js/deletionConfirm.js'
+    %}
+    <script type="text/javascript" src="{{ asset_url }}"></script>
+    {% endjavascripts %}
+{% endblock %}

@@ -1,0 +1,180 @@
+{% extends 'AppBundle::view.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+
+    {% stylesheets
+        filter='cssrewrite'
+        output='resources/css/*.css'
+            'bower_components/leaflet/dist/leaflet.css'
+            'bower_components/leaflet-draw/dist/leaflet.draw.css'
+        %}
+        <link rel="stylesheet" href="{{ asset_url }}" />
+    {% endstylesheets %}
+{% endblock %}
+
+{% block navTitle %}Компенсационные маршруты{% endblock %}
+
+{% block userData %}
+    <input id="settings_map" 
+           type="hidden"
+           value="{{ (app.user is not null and app.user.settings is not null) ? app.user.settings.map }}" />
+{% endblock %}
+
+{% block actions %}
+    {{ parent() }}
+    <a href="{{ path('app_contiguous_route_calculate', {id: entity.id}) }}" class="button-action">
+        <div class="icon icon--plus"><svg viewbox="0 0 100 125"><use xlink:href="#new-route"></use></svg></div>
+        <div class="title">Рассчитать сопредельные</div>
+    </a>
+{% endblock %}
+
+{% block content %}
+    <div class="layout__content layout__content--view" id="compensation-route-view">
+        <div class="view-block">
+            <div class="view-block__title">
+                <div class="title">Информация о Компенсационном маршруте</div>
+            </div>
+            <div class="view-block__content">
+                <div class="ns-form-tabs" id="compensation-route-tabs">
+                    <div class="tabs">
+                        <div class="tabs__tab tabs__tab--active" data-type="info" id="info">Общая информация</div>
+                        <div class="tabs__tab" data-type="route-null" id="route-null">Нулевые рейсы</div>
+                        <div class="tabs__tab" data-type="contiguous-route" id="contiguous-route">Сопредельные маршруты</div>
+                    </div>
+                </div>
+                <div id="form-info" class="form-block form-block--tab">
+                    <div class="form-block__content tab_info">
+                        <div class="info-line">
+                            <div class="text">Наименование: <div class="text-span">{{ entity.title }}</div></div>
+                        </div>
+                        <div class="info-line">
+                            <div class="text">Длина (м): <div class="text-span">{{ entity.distance }}</div></div>
+                        </div>
+                        <div class="info-line">
+                            <div class="text">Статус: <div class="text-span">{{ entity.statusName }}</div></div>
+                        </div>
+                        <div class="info-line">
+                            <div class="text">Сбойные участки: 
+                                <div class="text-span">
+                                    {% for sector in entity.damagedSectors %}
+                                        <p>{{ sector.title }}</p>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-line">
+                            <input type="hidden" id="string_coordinates" value="{{ entity.stringCoordinates }}" />
+                            <input type="hidden" id="inverse_coordinates" value="{{ entity.inverseCoordinates }}" />
+                        </div>
+                        {% if entity.posts|length > 0 %}
+                            <div class="text">Посты: </div>
+                            <div class="table__body">
+                                {% for post in entity.posts %}
+                                    <div id="row-fields-post-{{ post.id }}" data-id="{{ post.id }}"  class="table__col row-{{ post.id }}">
+                                        <div class="row-{{ post.id }}">
+                                            <div class="text">{{ post.title }}</div>
+                                            <div class="text">{{ post.place }}</div>
+                                            <div class="row-stringCoordinates">
+                                                <input data-field="id" type="hidden" value="{{ post.id }}" />
+                                                <input data-field="string_coordinates" type="hidden" value="{{ post.stringCoordinates }}" />
+                                                <input class="row-title" type="hidden" value="{{ post.title }}" />
+                                                <input class="row-type" type="hidden" value="{{ post.type }}" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                    
+                <div id="form-route-null" class="form-block form-block--tab" style="display:none">
+                    <div class="form-block__content tab_route-null">
+                        <div class="table">
+                            <div class="table__header">
+                                <div class="table__row">
+                                    {% for key, field in filterRouteNullRound.children %}
+                                        <div class="table__col row-{{ key }}">
+                                                <div class="text">{{ field.vars.label }}</div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="table__body">
+                                {% for route in compensation_route_service.getRouteNull(entity) %}
+                                    <div id="row-fields-{{ route.id }}" class="table__row" data-id="{{ route.id }}"  data-type="null-route">
+                                        {% for key, field in filterRouteNullRound.children %}
+                                            <div class="table__col row-{{ key }}">
+                                                <div class="text">
+                                                    {% if key == 'startPoint' and attribute(route, 'straightDirection') %}
+                                                        {{ route.straightDirection.getFirstStop }}
+                                                        <input type="hidden" id="nullRouteCoordinates" name="string_coordinates" 
+                                                            value="{{ route.straightDirection.stringCoordinates }}" data-id="{{ route.id }}"/>
+                                                    {% elseif key == 'endPoint' and attribute(route, 'straightDirection') %}
+                                                        {{ route.straightDirection.getLastStop }}
+                                                    {% else %}
+                                                        {% if attribute(route, key) is defined %}
+                                                            {{ attribute(route, key) }}
+                                                        {% endif %}
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                            
+                <div id="form-contiguous-route" class="form-block form-block--tab" style="display:none">
+                    <div class="form-block__content tab_contiguous-route">
+                        <div class="table">
+                            <div class="table__header">
+                                <div class="table__row">
+                                    {% for key, field in filterContiguousRoute.children %}
+                                        <div class="table__col row-{{ key }}">
+                                                <div class="text">{{ field.vars.label }}</div>
+                                        </div>
+                                    {% endfor %}
+                                    <div class="table__col row-percentage">
+                                            <div class="text">% совпадения</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table__body">
+                                {% for contiguousRoute in entity.contiguousRoutes %}
+                                    {% include 'AppBundle::CompensationRoute/contiguous.form.html.twig' %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="view-map">
+            <div id="map-block" data-draw-mode="none">
+                <div id="map"></div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+
+{% block javascripts %}
+    {{ parent() }}
+    {% javascripts
+        output='resources/js/*.js'
+            'bower_components/leaflet/dist/leaflet.js'
+            'bower_components/leaflet-draw/dist/leaflet.draw.js'
+            '@AppBundle/Resources/public/js/map.js'
+            '@AppBundle/Resources/public/js/draw.geozone.js'
+            '@AppBundle/Resources/public/js/leaflet.popup.template.js'
+            '@AppBundle/Resources/public/js/draw.object.js'
+            '@AppBundle/Resources/public/js/post.list.js'
+            '@AppBundle/Resources/public/js/compensation.route.view.js'
+        %}
+        <script type="text/javascript" src="{{ asset_url }}"></script>
+    {% endjavascripts %}
+{% endblock %}

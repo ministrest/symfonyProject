@@ -1,0 +1,15 @@
+{% extends 'base.html.twig' %}
+{% block stylesheets %}
+    {% stylesheets
+        filter='cssrewrite'
+        output='resources/css/*.css'
+            '@AppBundle/Resources/public/css/app.css'
+    %}
+    <link rel="stylesheet" href="{{ asset_url }}" />
+    {% endstylesheets %}
+{% endblock %}
+{% block body %}
+    {% spaceless %}{% include '@AppBundle/Resources/public/img/icons.svg' %}{% endspaceless %}
+    {% spaceless %}{% include '@AppBundle/Resources/public/img/graphic.svg' %}{% endspaceless %}
+    {% block layout %}{% endblock %}
+{% endblock %}

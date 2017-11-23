@@ -1,0 +1,80 @@
+{% extends 'AppBundle::layout.html.twig' %}
+
+{% block nav %}
+    {{ parent() }}
+    <a href="{{ path("app_" ~ entityName|lower ~ "_list") }}" class="button-nav__link button-nav__link--active">
+        <div class="icon icon--next"><svg viewbox="0 0 30 30"><use xlink:href="#next"></use></svg></div>
+        <div class="title">{% block navTitle %}{% endblock %}</div>
+    </a>
+    {% if entity is not null and entity.id is not null %}
+        <a href="{{ path('app_' ~ entityName|lower ~ '_view', {id: entity.id}) }}" class="button-nav__link button-nav__link--active">
+            <div class="icon icon--next"><svg viewbox="0 0 30 30"><use xlink:href="#next"></use></svg></div>
+            <div class="title">{% block entityTitle %}{{ entity.title }}{% endblock %}</div>
+        </a>
+        <a class="button-nav__link button-nav__link--info">
+            <div class="icon icon--next"><svg viewbox="0 0 30 30"><use xlink:href="#next"></use></svg></div>
+            <div class="title">Редактирование</div>
+        </a>
+    {% else %}
+        <a class="button-nav__link button-nav__link--info">
+            <div class="icon icon--next"><svg viewbox="0 0 30 30"><use xlink:href="#next"></use></svg></div>
+            <div class="title">Создание</div>
+        </a>
+    {% endif %}
+{% endblock %}
+
+{% block submenu %}
+    <div class='layout__submenu'>
+        <div class="grid">
+            <div class="grid__colum">
+                {% block actions %}
+                    <div id="{{ entityName|lower }}_save_custom" class="button-action">
+                        <div class="icon icon--question">
+                            <svg viewbox="0 0 30 30"><use xlink:href="#done"></use></svg>
+                        </div>
+                        <div class="title">
+                            {% block actionSaveWholeTitle %}
+                                Сохранить 
+                                {% block actionSaveTitle %}{% endblock %}
+                            {% endblock %}
+                        </div>
+                    </div>
+                {% endblock %}
+            </div>
+            {% include 'AppBundle::Widgets/help.button.widget.html.twig' %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+  {% block form_wrapper %}
+  <div class="layout__content layout__content--form">
+  {% endblock form_wrapper %}
+    <div class="layout__form">
+      {{ form_start(form, {"attr":{"class":"entity-form", "novalidate": true} }) }}
+      {% block form %}
+        <div class="form-block">
+          <div class="form-block__title">
+            <div class="text">
+              Общая информация
+            </div>
+          </div>
+          <div class="form-block__content">
+            {% block form_main_block %}
+                {% for child in form.children %}
+                    <div class="input-block">
+                        {{ form_row(child) }}
+                    </div>
+                {% endfor %}
+            {% endblock %}
+          </div>
+        </div>
+      {% endblock %}
+      {{ form_end(form) }}
+      {% block other %}{% endblock %}
+    </div>
+    <div class="layout__map">
+      {% block form_map %}{% endblock %}
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends 'AppBundle::form.html.twig' %}
+{% block stylesheets %}
+    {{ parent() }}
+    {% stylesheets
+        filter='cssrewrite'
+        output='resources/css/*.css'
+            'bower_components/leaflet/dist/leaflet.css'
+            'bower_components/leaflet-draw/dist/leaflet.draw.css'
+            'bower_components/leaflet-geosearch/src/css/l.geosearch.css'
+        %}
+        <link rel="stylesheet" href="{{ asset_url }}" />
+    {% endstylesheets %}
+{% endblock %}
+
+{% block navTitle %}Компенсационные маршруты{% endblock %}
+{% block actionSaveTitle %}Компенсационный маршрут{% endblock %}
+{% block entityTitle %}{{ entity.title }}{% endblock %}
+
+{% block userData %}<input id="settings_map" type="hidden" value="{% if app.user is not null and app.user.settings is not null %}{{ app.user.settings.map }}{% endif %}" />{% endblock %}
+
+{% block form_wrapper %}
+<div class="layout__content layout__content--form-map">
+{% endblock form_wrapper %}
+
+{% block form_map %}
+  <div id="map-block" data-draw-mode="route">
+      <div id="map"></div>
+   </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {% javascripts
+        output='resources/js/*.js'
+            'bower_components/leaflet/dist/leaflet.js'
+            'bower_components/leaflet-draw/dist/leaflet.draw.js'
+            'bower_components/leaflet-routing-machine/dist/leaflet-routing-machine.js'
+            '@AppBundle/Resources/public/js/map.routing.plugins.js'
+            '@AppBundle/Resources/public/js/map.js'
+            '@AppBundle/Resources/public/js/draw.geozone.js'
+            '@AppBundle/Resources/public/js/draw.route.js'
+            '@AppBundle/Resources/public/js/compensation.route.js'
+            '@AppBundle/Resources/public/js/compensation.route.view.js'
+        %}
+        <script type="text/javascript" src="{{ asset_url }}"></script>
+    {% endjavascripts %}
+{% endblock %}

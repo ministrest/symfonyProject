@@ -1,0 +1,66 @@
+{% extends 'AppBundle::list.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {% stylesheets
+        output='resources/css/*.css'
+            'bower_components/leaflet/dist/leaflet.css'
+            'bower_components/leaflet-draw/dist/leaflet.draw.css'
+        %}
+        <link rel="stylesheet" href="{{ asset_url }}" />
+    {% endstylesheets %}
+{% endblock %}
+
+{% block navTitle %}Компенсационные маршруты{% endblock %}
+
+{% block userData %}
+    <input id="settings_map" 
+           type="hidden"
+           value="{{ (app.user is not null and app.user.settings is not null) ? app.user.settings.map }}" />
+{% endblock %}
+
+{% block paginationHeaders %}
+    {% if key != "countVehicles" and key != "contiguousRoutes" and key != "damagedSectors" %}
+        {% set label = key == "distance" ? "Длина" : field.vars.label %}
+        <div class="text">{{ knp_pagination_sortable(entities, label, 'e.'~key ) }}</div>
+    {% else %}
+        <div class="text">{{ field.vars.label }}</div>
+    {% endif %}
+{% endblock %}
+
+{% block map %}
+    <div id="map-block" data-draw-mode="none">
+        <div id="map"></div>
+    </div>
+{% endblock %}
+
+{% block entityRowBegin %}
+    {% set straight = (entity.straightDirection is not null) ? entity.straightDirection.stringCoordinates : '' %}
+    {% set inverse = (entity.inverseDirection is not null) ? entity.inverseDirection.stringCoordinates : '' %}
+    <input type="hidden" name="straight_string_coordinates" value="{{ straight }}" />
+    <input type="hidden" name="inverse_string_coordinates" value="{{ inverse }}" />
+{% endblock %}
+
+{% block entityFinalElse %}
+    {% if key == "redact" %}
+        {{ entity.redact ? "Да" : "Нет" }} 
+    {% elseif key == "status" %}  
+        {{ entity.statusName }} 
+    {% else %}    
+        {{ value }}
+    {% endif %}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {% javascripts
+        output='resources/js/*.js'
+            'bower_components/leaflet/dist/leaflet.js'
+            'bower_components/leaflet-draw/dist/leaflet.draw.js'
+            '@AppBundle/Resources/public/js/map.js'
+            '@AppBundle/Resources/public/js/draw.geozone.js'
+            '@AppBundle/Resources/public/js/compensation.route.list.js'
+        %}
+        <script type="text/javascript" src="{{ asset_url }}"></script>
+    {% endjavascripts %}
+{% endblock %}

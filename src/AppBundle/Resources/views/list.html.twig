@@ -1,0 +1,207 @@
+{% extends 'AppBundle::layout.html.twig' %}
+{% block nav %}
+    {{ parent() }}
+    <a class="button-nav__link">
+        <div class="icon icon--next">
+            <svg viewbox="0 0 30 30">
+                <use xlink:href="#next"></use>
+            </svg>
+        </div>
+        <div class="title">{% block navTitle %}{% endblock %}</div>
+    </a>
+{% endblock %}
+{% block content %}
+    <div class='layout__content'>
+        <div class="grid grid--content">
+            <div class="grid__colum grid__colum--table">
+                <div class="directory-header">
+                    {% block search %}
+                        <div class="search-block">
+                            <a class="filter-button" data-target="#filter-modal-main">
+                                <div class="icon-small icon-small--filter">
+                                    <svg viewBox="0 0 30 30">
+                                        <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#filter"></use>
+                                    </svg>
+                                </div>
+                                Фильтрация
+                            </a>
+                        </div>
+                    {% endblock %}
+                    <div id="navigation">
+                        {{ knp_pagination_render(entities) }}
+                    </div>
+                </div>
+                <div class="table">
+                    <div class="table__header">
+                        <div class="table__row">
+                            {% block tableHeaders %}
+                                {% block tableHeadersBegin %}{% endblock %}
+                                {% for key, field in filter.children %}
+                                    <div class="table__col row-{{ key }}">
+                                        {% block paginationHeaders %}
+                                            <div class="text">{{ knp_pagination_sortable(entities, field.vars.label, 'e.'~key ) }}</div>
+                                        {% endblock %}
+                                    </div>
+                                {% endfor %}
+                                {% block tableHeadersEnd %}{% endblock %}
+                            {% endblock %}
+                        </div>
+                    </div>
+                    {% block tableBody %}
+                        <div class="table__body">
+                            {% for entity in entities %}
+                                <div id="row-fields-{{ entity.id }}" class="table__row" data-id="{{ entity.id }}">
+                                    {% block entityRowBegin %}{% endblock %}
+                                    {% for key, field in filter.children %}
+                                        {% set fieldType = field.vars.block_prefixes %}
+                                        <div class="table__col row-{{ key }}">
+                                            <div class="text">
+                                                {% if attribute(entity, key) is defined %}
+                                                    {% set value = attribute(entity, key) %}
+                                                    {% if value is iterable %}
+                                                        {% set indexes = value | keys %}
+                                                        {% for index, item in value if index < 3 %}
+                                                            {{ item }}{% if index != 2 and index != indexes | last %}; {% endif %}
+                                                        {% endfor %}
+                                                        {% if indexes | length > 3 %} ... {% endif %}
+                                                    {% elseif 'filter_date' in fieldType %}
+                                                            {{ value | dateString('не указано') }}
+                                                    {% elseif value.timestamp is defined or 'datetime' in fieldType or 'filter_date_range' in fieldType %}
+                                                            {{ value | dateString('не указано') }}
+                                                    {% else %}
+                                                        {% block entityFinalElse %}{{ value }}{% endblock %}
+                                                    {% endif %}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                    {% block entityRowEnd %}{% endblock %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endblock %}
+                </div>
+            </div>
+            {% block map %}{% endblock %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block modal %}
+    <div class="modal hide-row filter-modal" id="filter-modal-main">
+        <div class="modal__title">
+            <div class="title">
+                Фильтрация
+            </div>
+            <div class="button-action modal-close">
+                <div class="icon icon--close">
+                    <svg viewbox="0 0 30 30">
+                        <use xlink:href="#close"></use>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        <div class="modal__content">
+            <form method="get" class="filter-form" action="{% block actionForm %}.{% endblock %}">
+                {% block tableFilters %}
+                    {% for key, field in filter.children %}
+                        <div class="filter-modal__row row-{{key}}">{{ form_row(field) }}</div>
+                    {% endfor %}
+                {% endblock %}
+                <div>
+                  <button type="submit">Применить</button>
+                  {% block resetButton %}
+                      <a class="button-modal button-reset" href="{% block resetForm %}{{ path('app_' ~ entityName|lower ~ '_list') }}{% endblock %}">Сбросить</a>
+                  {% endblock %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal hide-row" id="field_setting">
+        <div class="modal__title">
+            <div class="title">
+                Настроить отображаемые поля
+            </div>
+            <div class="button-action modal-close">
+                <div class="icon icon--close">
+                    <svg viewbox="0 0 30 30">
+                        <use xlink:href="#close"></use>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        <div class="modal__content modal__content--no-padding ">
+            <ul id="change-row-list">
+                {% block changeField %}
+                    {% for key, field in filter.children %}
+                        {% if key not in ["_token"] %}
+                            <li id="change-row-{{ key }}" data-field="{{ key }}">{{ field.vars.label }}</li>
+                        {% endif %}
+                    {% endfor %}
+                {% endblock %}
+            </ul>
+        </div>
+    </div>
+{% endblock %}
+
+{% block legend %}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {% javascripts
+
+    output='resources/js/*.js'
+    '@AppBundle/Resources/public/js/table.js'
+    '@AppBundle/Resources/public/js/leaflet.popup.template.js'
+    '@AppBundle/Resources/public/js/table.columns.js'
+    %}
+    <script type="text/javascript" src="{{ asset_url }}"></script>
+    {% endjavascripts %}
+{% endblock %}
+{% block submenu %}
+    <div class='layout__submenu'>
+        <div class="grid">
+            <div class="grid__colum">
+                {% block actions %}
+                    {% block add %}
+                        {% if app.user and app.user.hasPermission("ROLE_" ~ entityName|prepareEntityName ~ "_ADD") %}
+                            <a id="create_new" class="button-action" href="{{ path("app_" ~ entityName|lower ~ "_add") }}">
+                                <div class="icon icon--next">
+                                    <svg viewbox="0 0 30 30">
+                                        <use xlink:href="#plus"></use>
+                                    </svg>
+                                </div>
+                                <div class="title">Создать</div>
+                            </a>
+                        {% endif %}
+                    {% endblock %}
+                    {% block export %}{% endblock %}
+                    {% block showmore %}
+                        {% if app.user and app.user.hasPermission("ROLE_" ~ entityName|prepareEntityName ~ "_VIEW") %}
+                            <a id="about_entity" data-entity="{{ entityName|lower }}" class="button-action button-action--nonactive button-action--table" href="">
+                                <div class="icon icon--next">
+                                    <svg viewbox="0 0 30 30">
+                                        <use xlink:href="#next"></use>
+                                    </svg>
+                                </div>
+                                <div class="title">Подробнее</div>
+                            </a>
+                        {% endif %}
+                    {% endblock %}
+                    <div id="field_setting_action" class="button-action hide-column-menu">
+                        <div class="icon icon--settings">
+                            <svg viewbox="0 0 30 30">
+                                <use xlink:href="#settings"></use>
+                            </svg>
+                        </div>
+                        <div class="title">Настроить отображаемые поля</div>
+                    </div>
+                {% endblock %}
+                {% block extraActions %}{% endblock %}
+            </div>
+            {% include 'AppBundle::Widgets/help.button.widget.html.twig' %}
+        </div>
+    </div>
+{% endblock %}

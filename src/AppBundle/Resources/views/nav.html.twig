@@ -1,0 +1,20 @@
+{% macro getBlock(title, permissions) %}
+    {% if app.user.hasPermissions(permissions|keys) %}
+        <div class="navigation__block">
+        <div class="navigation__title">{{ title }}</div>
+            <div class="navigation__list">
+                <div class="menu-list">
+                    {% for key, value in permissions %}
+                        {% if app.user.hasPermission(key) %}
+                            <div class="navigation__link">
+                                <a href="{% if value.id is not defined %}{{ path(value.path) }}{% else %}{{ path(value.path, value.id) }}{% endif %}">
+                                    {{value.title}}
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endmacro %}
